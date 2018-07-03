@@ -210,6 +210,7 @@ function _gawk_inplace {
   local parms="$*"
   local dest_file
   dest_file="$(echo "$parms" | gawk -v RS="'" -v FS="'" 'END{ gsub(/^\s+/,""); print $1 }')"
+  # above doesn't handle files with spaces correctly
 
   _temporary_file
 
