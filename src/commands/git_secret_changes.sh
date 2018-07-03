@@ -25,13 +25,13 @@ function changes {
   local filenames="$*"
   if [[ -z "$filenames" ]]; then
     # Checking if no filenames are passed, show diff for all files.
-    filenames=$(_list_all_added_files)
+    filenames=$(_list_all_added_files)  # this can't work if filenames have spaces
   fi
 
   IFS='
   '
 
-  for filename in $filenames; do
+  for filename in "${filenames[@]}"; do
     local decrypted
     local diff_result
 
