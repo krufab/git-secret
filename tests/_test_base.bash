@@ -42,6 +42,7 @@ TEST_SECOND_FILENAME="local_file2"  # no spaces
 #TEST_DEFAULT_FILENAME="local file" # has spaces
 #TEST_SECOND_FILENAME="local file2" # has spaces
 
+
 function test_user_password {
   # It was set on key creation:
   echo "${1}pass"
