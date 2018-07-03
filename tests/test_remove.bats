@@ -2,8 +2,8 @@
 
 load _test_base
 
-FIRST_FILE="file_to_hide1"
-SECOND_FILE="file_to_hide2"
+FIRST_FILE="$TEST_DEFAULT_FILENAME"
+SECOND_FILE="$TEST_SECOND_FILENAME"
 
 
 function setup {
@@ -88,7 +88,7 @@ function _has_line {
 
   # Prepartions:
   local folder="somedir"
-  local file_in_folder="$folder/file_to_hide3"
+  local file_in_folder="$folder/file_to_hide3"  # TODO - test with spaces
 
   mkdir -p "$folder"
   set_state_secret_add "$file_in_folder" "somecontent3"
