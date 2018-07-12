@@ -37,11 +37,11 @@ TEST_DEFAULT_USER="user1"
 TEST_SECOND_USER="user2" # shellcheck disable=2034
 TEST_ATTACKER_USER="attacker1" # shellcheck disable=2034
 
-#TEST_DEFAULT_FILENAME="local_file"  # no spaces
-#TEST_SECOND_FILENAME="local_file2"  # no spaces
+TEST_DEFAULT_FILENAME="local_file"  # no spaces
+TEST_SECOND_FILENAME="local_file2"  # no spaces
 
-TEST_DEFAULT_FILENAME="local file" # has spaces
-TEST_SECOND_FILENAME="local file2" # has spaces
+#TEST_DEFAULT_FILENAME="local file" # has spaces
+#TEST_SECOND_FILENAME="local file2" # has spaces
 
 
 function test_user_password {

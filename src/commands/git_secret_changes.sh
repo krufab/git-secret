@@ -31,7 +31,7 @@ function changes {
   IFS='
   '
 
-  for filename in "${filenames[@]}"; do
+  for filename in $filenames; do
     local decrypted
     local diff_result
 
