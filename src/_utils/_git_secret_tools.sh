@@ -176,6 +176,7 @@ function _delete_line {
 }
 
 
+# this sets the global variable 'filename'
 function _temporary_file {
   # This function creates temporary file
   # which will be removed on system exit.
@@ -464,6 +465,7 @@ function _find_and_clean_formatted {
 }
 
 
+# this sets the global array variable 'filenames' 
 function _list_all_added_files {
   local path_mappings
   path_mappings=$(_get_secrets_dir_paths_mapping)
@@ -472,9 +474,14 @@ function _list_all_added_files {
     _abort "$path_mappings is missing."
   fi
 
+  local filename
+  filenames=()      # not local
   while read -r line; do
-    _get_record_filename "$line"
+    filename=$(_get_record_filename "$line")
+    filenames+=("$filename")
   done < "$path_mappings"
+
+  declare -a filenames     # so caller can get list from filenames array
 }
 
 

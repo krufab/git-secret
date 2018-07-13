@@ -18,5 +18,9 @@ function list {
   _user_required
 
   # Command logic:
-  _list_all_added_files
+  _list_all_added_files  # exports 'filenames' array
+  local filename
+  for filename in "${filenames[@]}"; do
+    echo "$filename"
+  done
 }
