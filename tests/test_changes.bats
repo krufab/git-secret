@@ -54,7 +54,7 @@ function teardown {
 
 @test "run 'changes' with hidden file missing" {
   local password=$(test_user_password "$TEST_DEFAULT_USER")
-  local encrypted_file=$(_get_encrypted_filename $FILE_TO_HIDE)
+  local encrypted_file=$(_get_encrypted_filename "$FILE_TO_HIDE")
   rm "$encrypted_file"
 
   run git secret changes -d "$TEST_GPG_HOMEDIR" -p "$password" "$FILE_TO_HIDE"
