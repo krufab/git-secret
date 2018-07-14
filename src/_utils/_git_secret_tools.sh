@@ -259,7 +259,7 @@ function _fsdb_rm_record {
   local key="$1"  # required
   local fsdb="$2" # required
 
-  _gawk_inplace -v key="$key" "'$AWK_FSDB_RM_RECORD'" "$fsdb"
+  _gawk_inplace -v key="'$key'" "'$AWK_FSDB_RM_RECORD'" "$fsdb"
 }
 
 function _fsdb_clear_hashes {
