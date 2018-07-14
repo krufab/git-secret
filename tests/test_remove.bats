@@ -55,8 +55,8 @@ function _has_line {
   [ "$other_files" -eq 0 ]
 
   # Both files should be present:
-  local first_encrypted_file=$(_get_encrypted_filename $FIRST_FILE)
-  local second_encrypted_file=$(_get_encrypted_filename $SECOND_FILE)
+  local first_encrypted_file=$(_get_encrypted_filename "$FIRST_FILE")
+  local second_encrypted_file=$(_get_encrypted_filename "$SECOND_FILE")
 
   [ -f "$first_encrypted_file" ]
   [ -f "$second_encrypted_file" ]
@@ -74,8 +74,8 @@ function _has_line {
   [ "$second_line" -eq 1 ]
 
   # Both files should be present:
-  local first_encrypted_file=$(_get_encrypted_filename $FIRST_FILE)
-  local second_encrypted_file=$(_get_encrypted_filename $SECOND_FILE)
+  local first_encrypted_file=$(_get_encrypted_filename "$FIRST_FILE")
+  local second_encrypted_file=$(_get_encrypted_filename "$SECOND_FILE")
 
   [ -f "$first_encrypted_file" ]
   [ -f "$second_encrypted_file" ]
@@ -101,7 +101,7 @@ function _has_line {
   local mapping_contains=$(_has_line "$file_in_folder")
   [ "$mapping_contains" -eq 1 ]
 
-  local encrypted_file=$(_get_encrypted_filename $file_in_folder)
+  local encrypted_file=$(_get_encrypted_filename "$file_in_folder")
   [ -f "$encrypted_file" ]
 
   # Cleaning up:
@@ -118,8 +118,8 @@ function _has_line {
   local mapping_contains=$(_has_line "$SECOND_FILE")
   [ "$mapping_contains" -eq 1 ]
 
-  local first_encrypted_file=$(_get_encrypted_filename $FIRST_FILE)
-  local second_encrypted_file=$(_get_encrypted_filename $SECOND_FILE)
+  local first_encrypted_file=$(_get_encrypted_filename "$FIRST_FILE")
+  local second_encrypted_file=$(_get_encrypted_filename "$SECOND_FILE")
   echo "$output"
   echo "$first_encrypted_file and $second_encrypted_file"
 
