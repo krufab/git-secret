@@ -88,7 +88,7 @@ function _has_line {
 
   # Prepartions:
   local folder="somedir"
-  local file_in_folder="$folder/file_to_hide3"  # TODO - test with spaces
+  local file_in_folder="$folder/$TEST_THIRD_FILENAME"
 
   mkdir -p "$folder"
   set_state_secret_add "$file_in_folder" "somecontent3"
