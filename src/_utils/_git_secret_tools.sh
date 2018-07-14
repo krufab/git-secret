@@ -214,9 +214,7 @@ function _gawk_inplace {
 
   _temporary_file
 
-  # below causes problems with quoted params? Doesn't re-quote them?
   bash -c "gawk ${parms}" > "$filename"
-  #gawk "${parms[@]}" > "$filename" # this doesn't work
   mv "$filename" "$dest_file"
 }
 
@@ -615,6 +613,10 @@ function _decrypt {
 
   local args=( "--use-agent" "--decrypt" "--no-permission-warning" )
 
+  if [[ "$write_to_file" -eq 1 ]]; then
+    args+=( "-o" "$filename" )
+  fi
+
   if [[ "$force" -eq 1 ]]; then
     args+=( "--yes" )
   fi
@@ -625,10 +627,6 @@ function _decrypt {
 
   if [[ "$GPG_VER_21" -eq 1 ]]; then
     args+=( "--pinentry-mode" "loopback" )
-  fi
-
-  if [[ "$write_to_file" -eq 1 ]]; then
-    args+=( "-o" "$filename" )
   fi
 
   local exit_code
