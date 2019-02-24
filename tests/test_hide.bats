@@ -4,6 +4,8 @@ load _test_base
 
 FILE_TO_HIDE="$TEST_DEFAULT_FILENAME"
 FILE_CONTENTS="hidden content юникод"
+FILE_CONTENTS_UPDATED="hidden content юникод\na_new_line"
+FILE_CONTENTS_CONFLICTS="hidden content юникод\n<<<<<<< file-on-disk\na_new_line\n=======\n>>>>>>> content-from-secret"
 
 
 function setup {
@@ -58,8 +60,8 @@ function teardown {
 
   # permissions should match. We don't have access to SECRETS_OCTAL_PERMS_COMMAND here
   local secret_perm
-  local file_perm   
-  secret_perm=$(ls -l "$encrypted_file" | cut -d' ' -f1)    
+  local file_perm
+  secret_perm=$(ls -l "$encrypted_file" | cut -d' ' -f1)
   file_perm=$(ls -l "$FILE_TO_HIDE" | cut -d' ' -f1)
 
   # text prefixed with '# ' and sent to file descriptor 3 is 'diagnostic' (debug) output for devs
@@ -166,7 +168,7 @@ function teardown {
   # compare
   [ "$status" -eq 0 ]
   [[ "${#lines[@]}" -eq 1 ]]
-  
+
   # output says 0 of 1 files are hidden because checksum didn't change and we didn't need to hide it again.
   [ "$output" = "done. 0 of 1 files are hidden." ]
   # no changes should occur to path_mappings files
@@ -254,4 +256,44 @@ function teardown {
   run git secret hide
   [ "$status" -eq 0 ]
   [ "$output" = "done. 1 of 1 files are hidden." ]
+}
+
+
+@test "run 'hide' with '-s'" {
+  run git secret hide -s
+
+  # Command must execute normally:
+  [[ "$status" -eq 0 ]]
+  [[ "${#lines[@]}" -eq 2 ]]
+  [[ "${lines[0]}" = "done. 1 of 1 files are hidden." ]]
+  [[ "${lines[1]}" = "cleaning up..." ]]
+
+  # New files should be created:
+  local encrypted_file=$(_get_encrypted_filename "$FILE_TO_HIDE")
+  [[ -f "$encrypted_file" ]]
+
+  # File must be removed:
+  [[ ! -f "$FILE_TO_HIDE" ]]
+}
+
+
+@test "run 'hide' with '-s' and file with conflicts" {
+  echo -en "${FILE_CONTENTS_CONFLICTS}" > "$FILE_TO_HIDE"
+
+  run git secret hide -s
+
+  # Command should return an error:
+  [ "$status" -ne 0 ]
+
+  [ "${#lines[@]}" -eq 3 ]
+  [ "${lines[0]}" = "Conflicts were found in the following file(s):" ]
+  [[ "${lines[1]}" == *"$FILE_TO_HIDE"* ]]
+  [ "${lines[2]}" = "Resolve conflicts before continuing. Aborting." ]
+
+  # New files should NOT be created:
+  local encrypted_file=$(_get_encrypted_filename "$FILE_TO_HIDE")
+  [[ ! -f "$encrypted_file" ]]
+
+  # File must still be there:
+  [[ -f "$FILE_TO_HIDE" ]]
 }
