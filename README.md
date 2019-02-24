@@ -1,119 +1,97 @@
-# git-secret
+# git-secret fork
 
-[![Backers on Open Collective](https://opencollective.com/git-secret/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/git-secret/sponsors/badge.svg)](#sponsors) [![Build Status](https://img.shields.io/travis/sobolevn/git-secret/master.svg)](https://travis-ci.org/sobolevn/git-secret) [![Homebrew](https://img.shields.io/homebrew/v/git-secret.svg)](https://formulae.brew.sh/formula/git-secret) [![Bintray deb](https://img.shields.io/bintray/v/sobolevn/deb/git-secret.svg)](https://bintray.com/sobolevn/deb/git-secret/view)
+This is a fork from the original [git-secret](https://github.com/sobolevn/git-secret) project. This fork improves the
+sequence of steps to handle encryption and decryption of secret files and simplifies the handling of branch merges, outlying
+differences between versions using standard git conflicts markers.
 
-[![git-secret](https://raw.githubusercontent.com/sobolevn/git-secret/gh-pages/images/git-secret-big.png)](http://git-secret.io/)
+## Wtf? - Why the fork?
 
+For a work related project, I needed to introduce `git-secret` into our CI/CD system. While it improved and simplified
+the configuration management process, it greatly complicated the development part. The original `git-secret` is not
+very user-friendly when you need to manage multiple branches at the same time.
 
-## What is `git-secret`?
+The issues is due to the fact that plain text files are not versioned, therefore it is difficult to keep track of the evolution
+between branches. The only tool provided is `git secret changes`: it outputs the differences in a `diff`-style format, which
+is machine-oriented, but does not provide clear visual hints, nor context, about the changes (i.e. it does not output the full file,
+but only the changed lines).
 
-`git-secret` is a bash tool which stores private data inside a git repo. 
-`git-secret` encrypts tracked files with public keys for users whom you trust using `gpg`, 
-allowing permitted users to access encrypted data using their secret keys. 
-With `git-secret`, changes to access rights are made easy and private-public key issues are handled for you. 
-Passwords do not need to be changed with `git-secret` when someone's permission is revoked - 
-just remove their key from the keychain using `git secret killperson their@email.com`, 
-and re-encrypt the files, and they won't be able to decrypt secrets anymore.
+Therefore, I decided to extend the original functionality of `git secret changes`, `git secret hide` and `git secret reveal`,
+adding the possibility to visualize differences in a git-style format, preventing the hide when conflicts are not resolved
+and automatically marking conflicts when decrypting.
+ 
+I created few PRs to the original `git secret` project ([#340](https://github.com/sobolevn/git-secret/pull/340),
+[#358](https://github.com/sobolevn/git-secret/pull/358)), but those were rejected, therefore I was forced to apply
+the improvements on my repository so that I can use them at work.
+I should be keeping this fork updated with the original project as much as I can, and I will deprecate it when the
+missing functionality will be added to the original `git secret`.
 
+## New functionality
 
-## Preview
+- `git secret reveal -s` (-s as in *safe*): decrypts secrets and automatically updates local files (if present), marking all
+changes with git-style markers. This avoids the use of `git secret reveal -f`, which might lead to accidental overwrite and
+also avoids the need of renaming a file if it is already present. As it modifies local content, `git secret reveal -s`
+will prevent, with an error message, to be run again till all conflicts have been resolved.  
 
-[![git-secret terminal preview](https://asciinema.org/a/41811.png)](https://asciinema.org/a/41811?autoplay=1)
+- `git secret hide -s` (-s as in *safe*): checks that there are no conflicts (parses the files to hide looking for git-style markers)
+and automatically calls `git secret hide -m -d`, to encrypt only modified files and to delete the plain text afterwards.
 
+- `git secret changes -g` (-g as in *git* style): compares the plaintext file and the encrypted file outputting **ALL** differences surrounded by
+the usual git-style markers. It is used internally by git `secret reveal -s`and `git secret hide -s`, but it can be used
+as stand alone.
 
-## Installation
+The default behavior of these commands has not changed and they remain 100% compatible with the original ones, that is they
+accept the same flags and parameters as the original `git secret reveal`, `git secret hide`, `git secret changes`.
 
-`git-secret` supports `brew`, just type: `brew install git-secret`
+## Example
 
-It also supports `apt` and `yum`. You can also use `make` if you want to. 
-See the [installation section](http://git-secret.io/installation) for the details.
+You are working on file1 in a feature branch. This is its content:
 
-### Requirements
+```yaml
+environment:
+  base_branch: master
+  branch: this_is_the_same_for_both_files
+```
 
-`git-secret` relies on several external packages:
+When you are done, you import file1.secret from master branch using `git checkout master file1.secret`.
+This is the content of the encrypted file1.secret
 
-- `bash` since `3.2.57` (it is hard to tell the correct `patch` release)
-- `gawk` since `4.0.2`
-- `git` since `1.8.3.1`
-- `gpg` since `gnupg 1.4` to `gnupg 2.X`
-- `sha256sum` since `8.21` (on freebsd and OSX `shasum` is used instead)
+```yaml
+environment:
+  base_branch: a_different_base_branch
+  branch: this_is_the_same_for_both_files
+  a_new_key: the_new_key_value
+```
 
+After running `git secret reveal -s`, the content of file1 is:
 
-## Contributing
+```yaml
+environment:
+<<<<< file-on-disk
+  base_branch: master
+=====
+  base_branch: a_different_base_branch
+>>>>> content-from-secret
+  branch: this_is_the_same_for_both_files
+<<<<< file-on-disk
+=====
+  a_new_key: the_new_key_value
+>>>>> content-from-secret
+```
 
-Do you want to help the project? Find an [issue](https://github.com/sobolevn/git-secret/issues) 
-and send a PR. It is more than welcomed! See [CONTRIBUTING.md](CONTRIBUTING.md) on how to do that.
+As we don't version file1, but only file1.secret, the markers do not contain reference to the
+version nor to the file name, but only `file-on-disk` or `content-from-secret` to inform the user
+from where the changes come from.
 
-### Security
+## How to install
 
-In order to encrypt (git-secret hide -m) files only when modified, the path
-mappings file tracks sha256sum checksums of the files added (git-secret add) to
-git-secret's path mappings filesystem database. Although, the chances of
-encountering a sha collision are low, it is recommend that you pad files with
-random data for greater security. Or avoid using  the `-m` option altogether.
-If your secret file holds more data than just a single password these
-precautions should not be necessary, but could be followed for greater
-security.
-
-If you found any security related issues, please do not disclose it in public. Send an email to `security@wemake.services`
-
-
-## Changelog
-
-`git-secret` uses semver. See [CHANGELOG.md](CHANGELOG.md).
-
-
-## Contributors
-
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/sobolevn/git-secret/graphs/contributors"><img src="https://opencollective.com/git-secret/contributors.svg?width=890" /></a>
-
-
-## Packagers
-
-Thanks also to all the people and groups who package git-secret to be easier to install on particular OSes or distributions!
-
-Here are some packagings of git-secret that we're aware of:
-
-- https://pkgs.alpinelinux.org/package/edge/testing/x86/git-secret
-- https://aur.archlinux.org/packages/git-secret/
-- https://packages.ubuntu.com/bionic/git-secret
-- https://packages.debian.org/sid/git-secret
-
-Such packages are considered 'downstream' because the git-secret code 'flows' from the git-secret repository 
-to the various rpm/deb/dpkg/etc packages that are created for specific OSes and distributions.
-
-We have also added notes specifically for packagers in [CONTRIBUTING.md](CONTRIBUTING.md).
-
-
-## Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/git-secret#backer)]
-
-<a href="https://opencollective.com/git-secret#backers" target="_blank"><img src="https://opencollective.com/git-secret/backers.svg?width=890"></a>
-
-
-## Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/git-secret#sponsor)]
-
-<a href="https://opencollective.com/git-secret/sponsor/0/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/1/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/2/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/3/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/4/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/5/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/6/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/7/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/8/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/git-secret/sponsor/9/website" target="_blank"><img src="https://opencollective.com/git-secret/sponsor/9/avatar.svg"></a>
-
+As this is a fork, no package will be built nor distributed. You have to clone locally this repository,
+build it and add the project folder to your path. The name of the command will be `git-secret`. Please note the dash.
+For more information on how to build it, please have a look to the original project: [https://github.com/sobolevn/git-secret](https://github.com/sobolevn/git-secret).
 
 ## License
 
 MIT. See [LICENSE.md](LICENSE.md) for details.
 
-
 ## Thanks
 
-Special thanks to [Elio Qoshi](https://elioqoshi.me/sq/) from [ura](http://ura.design/) for the awesome logo.
+Special thanks to [sobolevn](https://github.com/sobolevn) for the original project.
