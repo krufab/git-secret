@@ -41,6 +41,14 @@ function teardown {
   [ -f "$encrypted_file" ]
 }
 
+@test "run 'hide' normally with SECRETS_VERBOSE=1" {
+  SECRETS_VERBOSE=1 run git secret hide
+
+  # Command must execute normally. 
+  [ "$status" -eq 0 ]
+  [[ "$output" == "done. 1 of 1 files are hidden." ]]
+}
+
 @test "run 'hide' with '-P'" {
 
   # attempt to alter permissions on input file
@@ -201,8 +209,6 @@ function teardown {
   run git secret hide -d
   [ "$status" -eq 0 ]
 
-  ls && pwd
-
   # File must be removed:
   [ ! -f "$FILE_TO_HIDE" ]
 }
@@ -211,8 +217,6 @@ function teardown {
 @test "run 'hide' with '-d' and '-v'" {
   run git secret hide -v -d
   [ "$status" -eq 0 ]
-
-  ls && pwd
 
   # File must be removed:
   [ ! -f "$FILE_TO_HIDE" ]
